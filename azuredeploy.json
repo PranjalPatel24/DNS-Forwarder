@@ -192,12 +192,12 @@
       "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+        "[resourceId('otherResourceGroup','Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('otherResourceGroup','Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
       "properties": {
         "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+          "id": "[resourceId('otherResourceGroup','Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
         },
         "ipConfigurations": [
           {
@@ -208,7 +208,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pipName'))]"
               },
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet1Name'))]"
+                "id": "[resourceId('otherResourceGroup','Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet1Name'))]"
               }
             }
           }
