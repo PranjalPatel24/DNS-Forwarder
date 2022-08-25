@@ -11,12 +11,14 @@
     },
     "adminUsername": {
       "type": "string",
+      "defaultValue": "inferno",
       "metadata": {
         "description": "User name for the Virtual Machine."
       }
     },
     "storageAccountName": {
       "type": "string",
+      "defaultValue": "sainfdnsproxy",
       "metadata": {
         "description": "The name of the storage account for diagnostics.  Storage account names must be globally unique."
       }
@@ -37,7 +39,7 @@
     },
     "authenticationType": {
       "type": "string",
-      "defaultValue": "sshPublicKey",
+      "defaultValue": "password",
       "allowedValues": [
         "sshPublicKey",
         "password"
@@ -57,7 +59,7 @@
       "metadata": {
         "description": "Virtual machine size"
       },
-      "defaultValue": "Standard_A1_v2"
+      "defaultValue": "Standard_F2s_v2"
     },
     "_artifactsLocation": {
       "type": "string",
