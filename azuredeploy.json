@@ -77,6 +77,7 @@
   "variables": {
     "ubuntuOSVersion": "18.04-LTS",
     "asetName": "dnsproxy-avail",
+    "nsgName": "nsg-inf-prod-cin-001",
     "vnetName": "vnet-inf-sbx-cin-001",
     "vnetAddressPrefix": "10.110.0.0/16",
     "subNet1Name": "ManagementSubnet",
@@ -124,7 +125,31 @@
         "platformUpdateDomainCount": 2
       }
     },
-  
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "comments": "An NSG to prevent inbound traffic other than SSH, set sourceAddressPrefix to restrict access further or block all together (or remove the public ip) and ssh in from another vm",
+      "name": "[variables('nsgName')]",
+      "apiVersion": "2020-05-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_ssh_in",
+            "properties": {
+              "description": "The only thing allowed is SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
     {
       "type": "Microsoft.Network/virtualNetworks",
       "comments": "An example virtual network, for real scenarios add the DNS forwarder to your own vnet",
