@@ -192,7 +192,6 @@
       "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
-        "[resourceId('otherResourceGroup','Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
         "[resourceId('otherResourceGroup','Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
       "properties": {
