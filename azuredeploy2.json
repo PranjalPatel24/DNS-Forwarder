@@ -136,7 +136,7 @@
       "comments": "Storage account for the VHD files for the VMs",
       "name": "[parameters('storageAccountName')]",
       "apiVersion": "2019-06-01",
-      "location": "[variables('location')]",
+      "location": "Central India",
       "sku": {
         "name": "[variables('storType')]"
       },
@@ -147,7 +147,7 @@
       "comments": "availability set for creating a HA cluster, run the template multiple times to get multiple DNS servers",
       "name": "[variables('asetName')]",
       "apiVersion": "2019-12-01",
-      "location": "[variables('location')]",
+      "location": "Central India",
       "sku": {
         "name": "Aligned"
       },
@@ -192,7 +192,7 @@
       "comments": "A single network interface on each DNS server",
       "name": "[variables('nicName')]",
       "apiVersion": "2020-05-01",
-      "location": "[variables('location')]",
+      "location": "Central India",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
@@ -216,7 +216,7 @@
       "comments": "A stock Ubuntu server, a VM extension will add the DNS server to it later",
       "name": "[parameters('vmName')]",
       "apiVersion": "2019-12-01",
-      "location": "[variables('location')]",
+      "location": "Central India",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
         "[resourceId('Microsoft.Storage/StorageAccounts/', parameters('storageAccountName'))]",
@@ -267,7 +267,7 @@
       "comments": "The shell script to install Bind9 and setup the ACL and forwarders.  If this step fails, check the logs in /var/log/waagent.log and /var/log/azure/* for details",
       "name": "[concat(parameters('vmName'),'/setupdnsfirewall')]",
       "apiVersion": "2019-12-01",
-      "location": "[variables('location')]",
+      "location": "Central India",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
