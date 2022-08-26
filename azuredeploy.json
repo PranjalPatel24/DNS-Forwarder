@@ -9,6 +9,24 @@
         "description": "Name of the Virtual Machine."
       }
     },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET"
+      }
+    },
+    "existingVirtualNetworkResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET resource group"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet in the virtual network you want to use"
+      }
+    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -78,10 +96,9 @@
     "ubuntuOSVersion": "18.04-LTS",
     "asetName": "dnsproxy-avail",
     "nsgName": "nsg-inf-prod-cin-001",
-    "vnetName": "vnet-inf-sbx-cin-001",
-    "vnetAddressPrefix": "10.100.0.0/16",
-    "subNet1Name": "ManagementSubnet",
-    "subNet1Prefix": "10.100.0.0/24",
+    "vnetID": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('subnetName'))]",
+    "vnetAddressPrefix": "10.110.0.0/16",
     "storType": "Standard_LRS",
     "location": "[parameters('location')]",
     "nicName": "[concat(parameters('vmName'), '-', 'nic')]",
@@ -126,53 +143,6 @@
       }
     },
     {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "comments": "An NSG to prevent inbound traffic other than SSH, set sourceAddressPrefix to restrict access further or block all together (or remove the public ip) and ssh in from another vm",
-      "name": "[variables('nsgName')]",
-      "apiVersion": "2020-05-01",
-      "location": "[variables('location')]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "allow_ssh_in",
-            "properties": {
-              "description": "The only thing allowed is SSH",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "22",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks",
-      "comments": "An example virtual network, for real scenarios add the DNS forwarder to your own vnet",
-      "name": "[variables('vnetName')]",
-      "apiVersion": "2020-05-01",
-      "location": "[variables('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('vnetAddressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnet1Name')]",
-            "properties": {
-              "addressPrefix": "[variables('subNet1Prefix')]"
-            }
-          }
-        ]
-      }
-    },
-    {
       "type": "Microsoft.Network/publicIPAddresses",
       "comments": "A public IP to allow us to SSH into the VM, not recommended for production DNS servers",
       "name": "[variables('pipName')]",
@@ -189,14 +159,9 @@
       "apiVersion": "2020-05-01",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('pipName'))]"
       ],
       "properties": {
-        "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
-        },
         "ipConfigurations": [
           {
             "name": "ipconfig1",
@@ -206,7 +171,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pipName'))]"
               },
               "subnet": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet1Name'))]"
+                "id": "[variables('subnetRef')]"
               }
             }
           }
