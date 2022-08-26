@@ -4,21 +4,21 @@
   "parameters": {
     "vmName": {
       "type": "string",
-      "defaultValue": "dnsproxy",
+      "defaultValue": "vm-bidw-dnspxy-wus-001",
       "metadata": {
         "description": "Name of the Virtual Machine."
       }
     },
     "existingVirtualNetworkName": {
       "type": "string",
-      "defaultValue": "vnet-inf-sbx-cin-001",
+      "defaultValue": "vnet-bidw-prd-wus-001",
       "metadata": {
         "description": "Name of the existing VNET"
       }
     },
     "existingVirtualNetworkResourceGroup": {
       "type": "string",
-      "defaultValue": "rg-haxcore-sbx-cin",
+      "defaultValue": "AMP-BIDWCORE-PRD-WUS-RG",
       "metadata": {
         "description": "Name of the existing VNET resource group"
       }
@@ -32,14 +32,14 @@
     },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "inferno",
+      "defaultValue": "azureadmin",
       "metadata": {
         "description": "User name for the Virtual Machine."
       }
     },
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "sainfdnsproxy",
+      "defaultValue": "sabidwdnsproxy",
       "metadata": {
         "description": "The name of the storage account for diagnostics.  Storage account names must be globally unique."
       }
@@ -99,11 +99,10 @@
   },
   "variables": {
     "ubuntuOSVersion": "18.04-LTS",
-    "asetName": "dnsproxy-avail",
-    "nsgName": "nsg-inf-prod-cin-001",
+    "asetName": "avail-dnsproxy-wus-001",
     "vnetID": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('subnetName'))]",
-    "vnetAddressPrefix": "10.110.0.0/16",
+    "vnetAddressPrefix": "10.73.30.0/24",
     "storType": "Standard_LRS",
     "location": "[parameters('location')]",
     "nicName": "[concat(parameters('vmName'), '-', 'nic')]",
