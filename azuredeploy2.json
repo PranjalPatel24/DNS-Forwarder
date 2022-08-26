@@ -9,6 +9,12 @@
         "description": "Name of the Virtual Machine."
       }
     },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "New or Existing VNet Name"
+      }
+    },
     "virtualNetworkNewOrExisting": {
       "type": "string",
       "metadata": {
@@ -190,7 +196,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pipName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetId')]"
