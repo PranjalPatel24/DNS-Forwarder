@@ -9,58 +9,14 @@
         "description": "Name of the Virtual Machine."
       }
     },
-    "virtualNetworkName": {
-      "type": "string",
-      "defaultValue": "vnet-inf-sbx-cin-001",
-      "metadata": {
-        "description": "New or Existing VNet Name"
-      }
-    },
-    "virtualNetworkNewOrExisting": {
-      "type": "string",
-      "defaultValue": "Existing",
-      "metadata": {
-        "description": "Boolean indicating whether the VNet is new or existing"
-      }
-    },
-    "virtualNetworkAddressPrefix": {
-      "type": "string",
-      "defaultValue": "10.110.0.0/16",
-      "metadata": {
-        "description": "VNet address prefix"
-      }
-    },
-    "virtualNetworkResourceGroup": {
-      "type": "string",
-      "defaultValue": "rg-haxcore-sbx-cin",
-      "metadata": {
-        "description": "Resource group of the VNet"
-      }
-    },
-    "subnetName": {
-      "type": "string",
-      "defaultValue": "ManagementSubnet",
-      "metadata": {
-        "description": "New or Existing subnet Name"
-      }
-    },
-    "subnetAddressPrefix": {
-      "type": "string",
-      "defaultValue": "10.110.0.0/24",
-      "metadata": {
-        "description": "Subnet address prefix"
-      }
-    },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "inferno",
       "metadata": {
         "description": "User name for the Virtual Machine."
       }
     },
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "sainfdnsproxy",
       "metadata": {
         "description": "The name of the storage account for diagnostics.  Storage account names must be globally unique."
       }
@@ -74,14 +30,14 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "Central India",
+      "defaultValue": "[resourceGroup().location]",
       "metadata": {
         "description": "Location for all resources."
       }
     },
     "authenticationType": {
       "type": "string",
-      "defaultValue": "password",
+      "defaultValue": "sshPublicKey",
       "allowedValues": [
         "sshPublicKey",
         "password"
@@ -92,7 +48,6 @@
     },
     "adminPasswordOrKey": {
       "type": "securestring",
-      "defaultValue": "Inferno@Secret@55",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
@@ -102,7 +57,7 @@
       "metadata": {
         "description": "Virtual machine size"
       },
-      "defaultValue": "Standard_F2s_v2"
+      "defaultValue": "Standard_A1_v2"
     },
     "_artifactsLocation": {
       "type": "string",
@@ -120,15 +75,29 @@
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sawinvm')]",
-    "publicIPAddressName": "[concat(uniqueString(resourceGroup().id),'IP')]",
-    "vmName": "[parameters('vmName')]",
-    "nicName": "[concat(parameters('vmName'),'Nic')]",
-    "vnetId": {
-      "existing": "[resourceId(parameters('virtualNetworkResourceGroup'),'Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]"
-    },
-    "subnetId": "[concat(variables('vnetId')[parameters('virtualNetworkNewOrExisting')],'/subnets/',parameters('subnetName'))]",
-    "publicIPAddressType": "Dynamic"
+    "ubuntuOSVersion": "18.04-LTS",
+    "asetName": "dnsproxy-avail",
+    "nsgName": "nsg-inf-prod-cin-001",
+    "vnetName": "vnet-inf-sbx-cin-001",
+    "vnetAddressPrefix": "10.100.0.0/16",
+    "subNet1Name": "ManagementSubnet",
+    "subNet1Prefix": "10.100.0.0/24",
+    "storType": "Standard_LRS",
+    "location": "[parameters('location')]",
+    "nicName": "[concat(parameters('vmName'), '-', 'nic')]",
+    "pipName": "[concat(parameters('vmName'), '-', 'pip')]",
+    "scriptUrl": "[uri(parameters('_artifactsLocation'), concat('forwarderSetup.sh', parameters('_artifactsLocationSasToken')))]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": false,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
   },
   "resources": [
     {
@@ -136,7 +105,7 @@
       "comments": "Storage account for the VHD files for the VMs",
       "name": "[parameters('storageAccountName')]",
       "apiVersion": "2019-06-01",
-      "location": "Central India",
+      "location": "[variables('location')]",
       "sku": {
         "name": "[variables('storType')]"
       },
@@ -147,7 +116,7 @@
       "comments": "availability set for creating a HA cluster, run the template multiple times to get multiple DNS servers",
       "name": "[variables('asetName')]",
       "apiVersion": "2019-12-01",
-      "location": "Central India",
+      "location": "[variables('location')]",
       "sku": {
         "name": "Aligned"
       },
@@ -157,22 +126,47 @@
       }
     },
     {
-      "condition": "[equals(parameters('virtualNetworkNewOrExisting'),'new')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "comments": "An NSG to prevent inbound traffic other than SSH, set sourceAddressPrefix to restrict access further or block all together (or remove the public ip) and ssh in from another vm",
+      "name": "[variables('nsgName')]",
+      "apiVersion": "2020-05-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_ssh_in",
+            "properties": {
+              "description": "The only thing allowed is SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2021-02-01",
-      "name": "[parameters('virtualNetworkName')]",
-      "location": "[parameters('location')]",
+      "comments": "An example virtual network, for real scenarios add the DNS forwarder to your own vnet",
+      "name": "[variables('vnetName')]",
+      "apiVersion": "2020-05-01",
+      "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[parameters('virtualNetworkAddressPrefix')]"
+            "[variables('vnetAddressPrefix')]"
           ]
         },
         "subnets": [
           {
-            "name": "[parameters('subnetName')]",
+            "name": "[variables('subnet1Name')]",
             "properties": {
-              "addressPrefix": "[parameters('subnetAddressPrefix')]"
+              "addressPrefix": "[variables('subNet1Prefix')]"
             }
           }
         ]
@@ -180,11 +174,12 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
-      "apiVersion": "2021-02-01",
-      "location": "[parameters('location')]",
+      "comments": "A public IP to allow us to SSH into the VM, not recommended for production DNS servers",
+      "name": "[variables('pipName')]",
+      "apiVersion": "2020-05-01",
+      "location": "[variables('location')]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
@@ -192,31 +187,38 @@
       "comments": "A single network interface on each DNS server",
       "name": "[variables('nicName')]",
       "apiVersion": "2020-05-01",
-      "location": "Central India",
+      "location": "[variables('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('pipName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        },
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pipName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetId')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnet1Name'))]"
               }
             }
           }
         ]
-      },
+      }
+    },
     {
       "type": "Microsoft.Compute/virtualMachines",
       "comments": "A stock Ubuntu server, a VM extension will add the DNS server to it later",
       "name": "[parameters('vmName')]",
       "apiVersion": "2019-12-01",
-      "location": "Central India",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
         "[resourceId('Microsoft.Storage/StorageAccounts/', parameters('storageAccountName'))]",
@@ -267,7 +269,7 @@
       "comments": "The shell script to install Bind9 and setup the ACL and forwarders.  If this step fails, check the logs in /var/log/waagent.log and /var/log/azure/* for details",
       "name": "[concat(parameters('vmName'),'/setupdnsfirewall')]",
       "apiVersion": "2019-12-01",
-      "location": "Central India",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
