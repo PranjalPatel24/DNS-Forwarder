@@ -11,36 +11,42 @@
     },
     "virtualNetworkName": {
       "type": "string",
+      "defaultValue": "vnet-inf-sbx-cin-001",
       "metadata": {
         "description": "New or Existing VNet Name"
       }
     },
     "virtualNetworkNewOrExisting": {
       "type": "string",
+      "defaultValue": "Existing",
       "metadata": {
         "description": "Boolean indicating whether the VNet is new or existing"
       }
     },
     "virtualNetworkAddressPrefix": {
       "type": "string",
+      "defaultValue": "10.110.0.0/16",
       "metadata": {
         "description": "VNet address prefix"
       }
     },
     "virtualNetworkResourceGroup": {
       "type": "string",
+      "defaultValue": "rg-haxcore-sbx-cin",
       "metadata": {
         "description": "Resource group of the VNet"
       }
     },
     "subnetName": {
       "type": "string",
+      "defaultValue": "ManagementSubnet",
       "metadata": {
         "description": "New or Existing subnet Name"
       }
     },
     "subnetAddressPrefix": {
       "type": "string",
+      "defaultValue": "10.110.0.0/24",
       "metadata": {
         "description": "Subnet address prefix"
       }
